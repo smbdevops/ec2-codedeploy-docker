@@ -1,0 +1,5 @@
+ec2_instance_size = "t3.small"
+infra_env = "develop"
+codedeploy_service_role_arn = "arn:aws:iam::848116219031:role/codedeploy-role"
+ec2_security_group_id = "sg-04f67c920e5a7f8aa"
+ec2_instance_profile_arn = "arn:aws:iam::848116219031:instance-profile/com.example.app-instance-profile"

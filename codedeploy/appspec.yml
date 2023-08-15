@@ -1,0 +1,19 @@
+---
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/current-deployment
+hooks:
+  AfterInstall:
+    - location: pull-images.sh
+      runas: root
+      timeout: 1800
+  ApplicationStart:
+    - location: stop-and-start-containers.sh
+      runas: root
+      timeout: 600
+  ValidateService:
+    - location: validate-service-and-prune.sh
+      runas: root
+      timeout: 300

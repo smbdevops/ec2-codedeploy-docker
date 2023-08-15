@@ -1,0 +1,48 @@
+pipeline {
+    agent none
+
+    environment {
+        TARGET_ENV_NAME="develop"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '7'))
+        timeout(time: 14, unit: 'DAYS')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('TF Plan infrastructure changes') {
+            agent any
+            steps {
+                script {
+                    sh("./terraform/com.example.app/run.sh ${TARGET_ENV_NAME} init")
+                    sh("./terraform/com.example.app/run.sh ${TARGET_ENV_NAME} plan -detailed-exitcode")
+                }
+            }
+        }
+        stage('Apply infrastructure changes') {
+            agent any
+            steps {
+                timeout(time: 14, unit: "DAYS") {
+                    input message: 'Do you want to approve the deployment?', ok: 'Yes'
+                }
+                script {
+                    sh("./terraform/com.example.app/run.sh ${TARGET_ENV_NAME} init")
+                    sh("./terraform/com.example.app/run.sh ${TARGET_ENV_NAME} apply -auto-approve")
+                }
+            }
+        }
+        stage('update ASG') {
+            agent any
+            steps {
+                timeout(time: 14, unit: "DAYS") {
+                    input message: 'Do you want to refresh the existing instances?', ok: 'Yes'
+                }
+                script {
+                   sh("./terraform/com.example.app/instance_refresh.sh ${TARGET_ENV_NAME}")
+                }
+            }
+        }
+    }
+}

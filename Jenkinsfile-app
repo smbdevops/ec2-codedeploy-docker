@@ -1,0 +1,64 @@
+IMAGE_TAG = 'replaceme'
+pipeline {
+    agent none
+
+    environment {
+        JENKINS_CREDENTIALS_KEY_FOR_ECR="ecr:us-west-1:AWS-Credentials"
+        REPOSITORY="AWS_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com"
+        IMAGE_NAME="example-app" ## Only applicable if a single-image is used across the board.
+        IMAGE_TAG="${env.GIT_COMMIT}"
+        AWS_CREDENTIALS_PROFILE_NAME="default"
+        CODEDEPLOY_APPLICATION_NAME="com.example.app"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '7'))
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('build images') {
+            parallel {
+                ## Copy me if you have multiple images that need to be built together
+                stage("build example-app image") {
+                    agent any
+                    steps {
+                        script {
+                            sh """cd ${WORKSPACE}/example-app && ./build.sh ${IMAGE_TAG}"""
+                            sh "docker image ls ${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                            sh "docker image history ${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Publish to ECR') {
+            agent any
+            steps {
+                script {
+                    docker.withRegistry("https://${REPOSITORY}", "${env.JENKINS_CREDENTIALS_KEY_FOR_ECR}") {
+                        docker.image("${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('deploy to EC2') {
+            agent any
+            when {
+                expression {
+                    return (BRANCH_NAME == "production" || BRANCH_NAME == "develop")
+                }
+            }
+            steps {
+                script {
+                    ## I like to name git branches according to the target environment. E.g., "production" is less ambiguous than "main" or "master".
+                    
+                    sh"./codedeploy.sh -p ${AWS_CREDENTIALS_PROFILE_NAME} -g ${BRANCH_NAME} -n ${CODEDEPLOY_APPLICATION_NAME} -c ${IMAGE_TAG}"
+                }
+            }
+        }
+    }
+}

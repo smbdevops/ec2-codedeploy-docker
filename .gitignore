@@ -1,0 +1,12 @@
+codedeploy/image_name
+codedeploy/repository
+codedeploy/image_tag
+.idea/
+/terraform/com.example.app/.terraform/modules/
+/terraform/com.example.app/.terraform/providers/
+/terraform/com.example.app/shared/modules/
+/terraform/com.example.app/shared/providers/
+/terraform/com.example.app/develop/modules/
+/terraform/com.example.app/develop/providers/
+/terraform/com.example.app/production/modules/
+/terraform/com.example.app/production/providers/

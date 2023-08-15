@@ -1,0 +1,21 @@
+pipeline {
+    agent none
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '7'))
+        timeout(time: 90, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Create AMI') {
+            agent any
+            steps {
+                script {
+                    sh(script: """docker run --rm -v "~/.aws:/root/.aws" -v "$PWD:/workspace" -e AWS_PROFILE=default -e PACKER_PLUGIN_PATH=/workspace/.packer/plugins hashicorp/packer:1.9 init .""")
+                    sh(script: """docker run --rm -v "$PWD:/workspace" -e AWS_PROFILE=default -e PACKER_PLUGIN_PATH=/workspace/.packer/plugins hashicorp/packer:1.9 build .""")
+                }
+            }
+        }
+    }
+}

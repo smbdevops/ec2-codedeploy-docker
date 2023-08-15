@@ -1,0 +1,6 @@
+/.terraform/providers/
+/shared/.terraform/providers/
+/jchavanton/.terraform/providers/
+/jpeterson/.terraform/providers/
+/develop/.terraform/providers/
+/production/.terraform/providers/

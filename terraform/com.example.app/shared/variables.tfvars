@@ -1,0 +1,1 @@
+aws_route_53_zone_id = "Z20AREMDAQBIIZ"
